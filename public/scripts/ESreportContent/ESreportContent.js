@@ -7,16 +7,16 @@ let app = new Vue({
         return {
             search_type: 'All',
             bundle: null,
-            IS_display: loding_template, // 顯示在IS的html
+            IS_display: nodata_template, // 顯示在IS的html
             IS_display_path: [], // fetch path
             IS_list: [], // ImagingStudy resource 
             IS_list_page: 0,
 
-            DR_display: loding_template, // 顯示在DR的html
+            DR_display: nodata_template, // 顯示在DR的html
             DR_display_path: [], // fetch path
             DR_list: [], // DiagnosticReport resource 
             DR_list_page: 0,
-
+            bundle_url: 'https://tony880321.github.io/micala_SIIM/public/bundle.json'
         }
     },
     created: function () {
@@ -80,13 +80,13 @@ let app = new Vue({
         },
         parse_path(list) {
             if (list.length > 0) {
-                let htmlStr = `<nav class='d-inline'><ol class="breadcrumb mb-0">`                
+                let htmlStr = `<nav class='d-inline'><ol class="breadcrumb mb-0">`
                 for (let item of list) {
                     htmlStr += `<li class="breadcrumb-item">${item}</li>`
                 }
                 htmlStr += `</ol></nav>`
                 return htmlStr
-            } 
+            }
         },
         parse_object(isBaseTable, obj, target) {
             if (isBaseTable) {
@@ -105,7 +105,7 @@ let app = new Vue({
                             <span class="badge rounded-pill bg-warning text-dark ms-1">${(value.length) ? (value.length) : 1}</span>
                         </button></td></tr>`
                 } else {
-                    if(key=='reference'){
+                    if (key == 'reference') {
                         value = this.make_referenfce(target, value)
                     }
                     htmlStr += `<tr><th class="w-25">${firstUpperCase(key)}</th><td class="w-75 p-1">${value}</td></tr>`
@@ -114,21 +114,19 @@ let app = new Vue({
             htmlStr += `</tbody></table>`
             return htmlStr
         },
-        make_referenfce(target, ref){
-            if(target=='IS'){
+        make_referenfce(target, ref) {
+            if (target == 'IS') {
                 let fullUrl = this.IS_list[this.IS_list_page].fullUrl
                 return `<a class="btn btn-link" href="${fullUrl.split('/fhir')[0]}/fhir/${ref}" target="_blank">${ref}</a>`
-            }else if(target=='DR'){
+            } else if (target == 'DR') {
                 let fullUrl = this.DR_list[this.DR_list_page].fullUrl
                 return `<a class="btn btn-link" href="${fullUrl.split('/fhir')[0]}/fhir/${ref}" target="_blank">${ref}</a>`
             }
-        }
-    },
-    async mounted() {
-        try {
-            // Get bundle
-            let bundle_url = '/public/bundle.json'
-            await axios.get(bundle_url)
+        },
+        async get_bundle(){
+            this.IS_display = loding_template
+            this.DR_display = loding_template
+            await axios.get(this.bundle_url)
                 .then(res => {
                     this.bundle = res.data
                     if (entry = this.bundle.entry) {
@@ -138,10 +136,17 @@ let app = new Vue({
                         this.IS_display_refresh
                         this.DR_display_refresh
                     }
-
                 }).catch(err => {
+                    alert("Can't get bundle")
                     console.log(err)
+                    this.IS_display = nodata_template
+                    this.DR_display = nodata_template
                 })
+        }
+    },
+    async mounted() {
+        try {
+           this.get_bundle()
         } catch (e) {
             console.log(e);
         }
