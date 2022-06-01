@@ -66,9 +66,9 @@
             <div class="col-md-6 p-3 border overflow-auto" style="max-height: 43rem;">
                 <div class="row">
                     <div class="col-md-6 text-md-start text-center mb-2">
-                        <h3 class="d-inline">ImagingStudy<span class="badge rounded-pill bg-success ms-2">{{IS_list.length}}</span></h3>
+                        <h3 class="d-inline">ImagingStudy<span class="badge rounded-pill bg-success ms-2">{{IS_list.length}}</span></h3>                        
                     </div>
-                    <div class="col-md-6 text-md-end text-center mb-2">
+                    <div class="col-md-6 text-md-end text-center mb-2">                                 
                         <button class="btn btn-sm btn-secondary" @click="change_page('IS',-1)" :disabled="IS_list_page<=0"><i class="bi bi-chevron-left" :disabled="IS_list_page<=0"></i>Prev</button>
                         <button class="btn btn-sm btn-secondary" @click="change_page('IS',0)"><strong>{{IS_list_page + 1}} / {{IS_list.length}}</strong></button>
                         <button class="btn btn-sm btn-secondary" @click="change_page('IS',1)" :disabled="IS_list_page>=IS_list.length-1">Next<i class="bi bi-chevron-right"></i></button>    
@@ -76,6 +76,7 @@
                     <div class="col-12">
                         <button class="btn btn-link text-dark" @click="IS_display_path.pop();IS_display_refresh"><i class="bi bi-arrow-left-circle"></i></button>
                         / <div class="d-inline-block" v-html="parse_path(IS_display_path)"></div>
+                        <a class="btn btn-sm btn-warning float-end" :href="IS_list[IS_list_page] && IS_list[IS_list_page].fullUrl" target="_blank"><i class="bi bi-box-arrow-up-right"></i>  Open</a>
                     </div>
                     <div class="12">
                         <div class='text-center table-responsive mt-2' v-html="IS_display">No data</div>
@@ -96,6 +97,7 @@
                     <div class="col-12">
                         <button class="btn btn-link text-dark" @click="DR_display_path.pop();DR_display_refresh"><i class="bi bi-arrow-left-circle"></i></button>
                         / <div class="d-inline-block" v-html="parse_path(DR_display_path)"></div>
+                        <a class="btn btn-sm btn-warning float-end" :href="DR_list[DR_list_page] && DR_list[DR_list_page].fullUrl" target="_blank"><i class="bi bi-box-arrow-up-right"></i>  Open</a>
                     </div>
                     <div class="12">
                         <div class='text-center table-responsive mt-2' v-html="DR_display">No data</div>

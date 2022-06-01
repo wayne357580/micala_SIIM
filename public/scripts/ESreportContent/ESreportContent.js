@@ -34,7 +34,7 @@ let app = new Vue({
                     obj = obj[step]
                 }
 
-                this.IS_display = parse_object(true, obj, 'IS')
+                this.IS_display = this.parse_object(true, obj, 'IS')
             } else {
                 this.IS_display = nodata_template
             }
@@ -47,7 +47,7 @@ let app = new Vue({
                     obj = obj[step]
                 }
 
-                this.DR_display = parse_object(true, obj, 'DR')
+                this.DR_display = this.parse_object(true, obj, 'DR')
             } else {
                 this.DR_display = nodata_template
             }
@@ -87,6 +87,41 @@ let app = new Vue({
                 htmlStr += `</ol></nav>`
                 return htmlStr
             } 
+        },
+        parse_object(isBaseTable, obj, target) {
+            if (isBaseTable) {
+                var htmlStr = `<table class="table table-bordered align-middle text-center mb-0">`
+            } else {
+                var htmlStr = `<table class="table table-sm table-bordered table-hover align-middle text-center mb-0">`
+            }
+            htmlStr += `<thead class='table-light'><tr><th scope="col">Column</th><th scope="col">Value</th></tr></thead>`
+            htmlStr += `<tbody>`
+            for (let key in obj) {
+                let value = obj[key]
+                if (typeof value == 'object') {
+                    htmlStr += `<tr><th class="w-25">${firstUpperCase(key)}</th><td class="w-75 p-2">
+                            <button class="btn btn-sm btn-success w-50" onclick="${target}_btnClick('${key}')">
+                            <strong >View</strong>
+                            <span class="badge rounded-pill bg-warning text-dark ms-1">${(value.length) ? (value.length) : 1}</span>
+                        </button></td></tr>`
+                } else {
+                    if(key=='reference'){
+                        value = this.make_referenfce(target, value)
+                    }
+                    htmlStr += `<tr><th class="w-25">${firstUpperCase(key)}</th><td class="w-75 p-1">${value}</td></tr>`
+                }
+            }
+            htmlStr += `</tbody></table>`
+            return htmlStr
+        },
+        make_referenfce(target, ref){
+            if(target=='IS'){
+                let fullUrl = this.IS_list[this.IS_list_page].fullUrl
+                return `<a class="btn btn-link" href="${fullUrl.split('/fhir')[0]}/fhir/${ref}" target="_blank">${ref}</a>`
+            }else if(target=='DR'){
+                let fullUrl = this.DR_list[this.DR_list_page].fullUrl
+                return `<a class="btn btn-link" href="${fullUrl.split('/fhir')[0]}/fhir/${ref}" target="_blank">${ref}</a>`
+            }
         }
     },
     async mounted() {
@@ -121,30 +156,16 @@ console.json = (j) => {
     }
 }
 
-function parse_object(isBaseTable, obj, target) {
-    if (isBaseTable) {
-        var htmlStr = `<table class="table table-bordered align-middle text-center mb-0">`
-    } else {
-        var htmlStr = `<table class="table table-sm table-bordered table-hover align-middle text-center mb-0">`
-    }
-    htmlStr += `<thead class='table-light'><tr><th scope="col">Column</th><th scope="col">Value</th></tr></thead>`
-    htmlStr += `<tbody>`
-    for (let key in obj) {
-        let value = obj[key]
-        if (typeof value == 'object') {
-            htmlStr += `<tr><th class="w-25">${firstUpperCase(key)}</th><td class="w-75 p-2">
-                    <button class="btn btn-sm btn-success w-50" onclick="${target}_btnClick('${key}')">
-                    <strong >View</strong>
-                    <span class="badge rounded-pill bg-warning text-dark ms-1">${(value.length) ? (value.length) : 1}</span>
-                </button></td></tr>`
-        } else {
-            htmlStr += `<tr><th class="w-25">${firstUpperCase(key)}</th><td class="w-75 p-1">${value}</td></tr>`
-        }
-    }
-    htmlStr += `</tbody></table>`
-    return htmlStr
+
+
+
+
+
+function firstUpperCase(s) {
+    return s[0].toUpperCase() + s.slice(1)
 }
 
+/*
 function parse_list(objKey, list) {
     let accordion_ID = make_ID(13)
     let htmlStr = `<div class="accordion m-2" id="accordion_${accordion_ID}">`
@@ -180,7 +201,4 @@ function make_ID(pasLen) {
     }
     return password;
 }
-
-function firstUpperCase(s) {
-    return s[0].toUpperCase() + s.slice(1)
-}
+*/
