@@ -64,6 +64,7 @@ function getAllWadoUrl(iItem, isJPG) {
     let studyUID = get_StudyUID(iItem);
     let port = ((envConfig.WADO.port) != "80" | (envConfig.WADO.port) != "443") ? `:${envConfig.WADO.port}` : "";
     let url = `${envConfig.WADO.http}://${envConfig.WADO.hostName}${port}/api/dicom/wado/?requestType=WADO&studyUID=${studyUID}`;
+    // http://{dicom serever base url}?requestType=WADO&studyUID=${studyUID}
     let seriesList = get_Series(iItem);
     let wadoUrlList = [];
     for (let i = 0; i < seriesList.length; i++) {
