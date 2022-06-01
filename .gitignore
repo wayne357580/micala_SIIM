@@ -20,3 +20,4 @@ models/FHIR/ImagingStudyInsertReport.js
 models/FHIR/test.js
 *.ffs_db
 public/scripts/config.js
+test.js

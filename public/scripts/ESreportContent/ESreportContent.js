@@ -1,4 +1,4 @@
-const loding_template = `<img src="../images/loading.gif"></div>`
+const loding_template = `<img src="./public/images/loading.gif"></div>`
 const nodata_template = `<h3>No data<h3/>`;
 
 let app = new Vue({
