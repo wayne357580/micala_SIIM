@@ -29,7 +29,6 @@ let app = new Vue({
     created: function () {
         window.IS_btnClick = this.IS_btnClick
         window.DR_btnClick = this.DR_btnClick
-        window.get_bundle = this.get_bundle
         //https://blog.csdn.net/yan_dk/article/details/109352118
     },
     computed: {
@@ -68,6 +67,92 @@ let app = new Vue({
             } else {
                 this.IS_display = nodata_template
             }
+            /* function */
+            function compare_path(target, path) {
+                if (target.length == path.length) {
+                    for (let i = 0; i < target.length; i++) {
+                        if ((typeof target[i] == 'string') && (target[i] != path[i])) {
+                            return false
+                        } else if ((typeof target[i] == 'number') && (typeof parseInt(path[i]) != 'number')) {
+                            return false
+                        }
+                    }
+                    return true
+                } else {
+                    return false
+                }
+            }
+            function parse_IS(obj, path) {
+                let res = {}
+                // Check type
+                if (check_sopClass(obj, path) && (obj[path[0]]['modality']['Code'] == 'SM')) {
+                    res.viewerUrl = config.bluelight_WSI_baseURL
+                    res.viewer = "BlueLight-WSI"
+                } else {
+                    res.viewerUrl = config.bluelight_baseURL
+                    res.viewer = "BlueLight"
+                }
+                // Get study UID
+                if (obj.identifier) {
+                    let studyUID = obj.identifier.filter(r => { return r.system == 'urn:dicom:uid' })
+                    if (studyUID.length == 1) {
+                        res.studyUID = studyUID[0].value.replace(/[^\d.-]/g, '')
+                    } else {
+                        console.log(`Exception: multiple studyUID, ${obj.id}`)
+                    }
+                }
+                return res
+            }
+            function check_sopClass(obj, path) {
+                for (let step of path) {
+                    obj = obj[step]
+                }
+                console.json(obj)
+                return obj.sopClass.code.replace(/[^\d.-]/g, '') == '1.2.840.10008.5.1.4.1.1.77.1.6'
+            }
+            async function check_img(url) {
+                await axios(url)
+                    .then(res => {
+                        return true
+                    }).catch(e => {
+                        return false
+                    })
+            }
+            async function make_carousel(urlList) {
+                let htmlStr = `<div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel"><div class="carousel-inner">`
+                let isActive = false
+                for (let item of urlList) {
+                    if (!await check_img(item.url)) {
+                        let imgURL = '../images/notfound.jpg'
+                        htmlStr += `<div class="carousel-item ${!isActive && "active"}">
+                            <img src="${imgURL}" class="d-block w-100" alt="${imgURL}">
+                        </div>`
+                        break
+                    } else {
+                        htmlStr += `<div class="carousel-item ${!isActive && "active"}">
+                            <img src="${item.url}" class="d-block w-100" alt="${item.url}">
+                            <div class="carousel-caption d-none d-md-block text-nowrap">                                
+                                <small>Study ID：${item.studyUID}</small><br/>
+                                <small>Series ID：${item.seriesUID}</small><br/>
+                                <small>Instance ID：${item.instanceUID}</small>
+                            </div>
+                        </div>`
+                    }
+                    isActive = true
+                }
+
+                htmlStr += `</div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>`
+                return htmlStr
+            }
         },
         DR_display_refresh() {
             this.DR_display = loding_template
@@ -84,7 +169,7 @@ let app = new Vue({
         },
         result_display_result() {
             let htmlStr = ``
-            if(this.result_list.length>0){
+            if (this.result_list.length > 0) {
                 for (let i = 0; i < this.result_list.length; i++) {
                     let bundle = this.result_list[i]
                     let IS = this.get_resource(bundle.resource.entry, "ImagingStudy")
@@ -93,7 +178,7 @@ let app = new Vue({
                     <div class="card-header">
                         <h4 class="card-title mb-0">
                             <span>${i + 1}. Resource ID：</span>
-                            <button class="btn btn-link p-0 m-0" onclick="get_bundle(${i})">${bundle.resource.id}</button>
+                            <button class="btn btn-link p-0 m-0" onclick="viewBundle('${bundle.resource.id}')">${bundle.resource.id}</button>
                         </h4>                                      
                     </div>
                     <div class="card-body">                  
@@ -102,34 +187,38 @@ let app = new Vue({
                     </div>
                   </div>`
                 }
-            }else{
+            } else {
                 htmlStr = `<div class='h-100 text-center'><h3 class='mb-0'>No data</h3></div>`
             }
-            
+
             this.result_display = htmlStr
         }
     },
     methods: {
         /* Search */
-        async search_resource() {
-            this.display_mode = 'search'
-            this.result_display = loding_template
-            let searchURL = `${config.burni_server_baseURL}/fhir/Bundle?_text=${this.search_text}`
-            console.log(searchURL)
-            //let searchURL = "../scripts/bundle-searchset.json"
-            await axios.get(searchURL)
-                .then(res => {
-                    if (res.data.entry) {
-                        this.result_list = res.data.entry
-                        this.result_display_result
-                    } else {
-                        this.result_list = []
-                        this.result_display_result
-                    }
-                }).catch(err => {
-                    alert(err.message)
-                    console.log(err)
-                })
+        get_searchRes() {
+            return new Promise((reslove, reject) => {
+                this.display_mode = 'search'
+                this.result_display = loding_template
+                let searchURL = `${config.burni_server_baseURL}/fhir/Bundle?_text=${this.search_text}`
+                //let searchURL = "../scripts/bundle-searchset.json"
+                axios.get(searchURL)
+                    .then(res => {
+                        if (res.data.entry) {
+                            this.result_list = res.data.entry
+                            this.result_display_result
+                            return reslove()
+                        } else {
+                            this.result_list = []
+                            this.result_display_result
+                        }
+                    }).catch(err => {
+                        alert(err.message)
+                        console.log(err)
+                        return reject()
+                    })
+            })
+
         },
         /* Result */
         get_resource(arr, resource) {
@@ -201,23 +290,35 @@ let app = new Vue({
                 return `<a class="btn btn-link" href="${fullUrl.split('/fhir')[0]}/fhir/${ref}" target="_blank">${ref}</a>`
             }
         },
-        get_bundle(idx) {
+        get_bundle(id) {
             this.IS_display = loding_template
             this.DR_display = loding_template
             this.display_mode = 'result'
-
-            this.bundle = this.result_list[idx].resource
-            if (entry = this.bundle.entry) {
-                // Get resource
-                this.IS_list = this.get_resource(entry, 'ImagingStudy')
-                this.DR_list = this.get_resource(entry, 'DiagnosticReport')
-                this.IS_display_refresh
-                this.DR_display_refresh
+            console.log(JSON.parse(JSON.stringify(this.result_list)))
+            let matchList = this.result_list.filter(r => { return r.resource.id == id })
+            if (matchList.length == 1) {
+                this.bundle = matchList[0].resource
+                if (entry = this.bundle.entry) {
+                    // Get resource
+                    this.IS_list = this.get_resource(entry, 'ImagingStudy')
+                    this.DR_list = this.get_resource(entry, 'DiagnosticReport')
+                    this.IS_display_refresh
+                    this.DR_display_refresh
+                }
             }
         },
         back_search() {
-            this.display_mode = 'search'
-            this.bundle = null
+            //this.display_mode = 'search'
+            //this.bundle = null
+            let url = new URL(location.href);
+            document.location.href = `${location.protocol}//${location.hostname}${location.port && `:${location.port}`}${location.pathname}?_text=${url.searchParams.get('_text')}`;
+        },
+        search_resource() {
+            if (location.hostname.includes('github.io')) {
+                document.location.href = `/${config.github_repository_name}/public/html/ESreportContent.html?_text=${this.search_text}`;
+            } else {
+                document.location.href = `/public/html/ESreportContent.html?_text=${this.search_text}`;
+            }
         }
     },
     async mounted() {
@@ -225,9 +326,11 @@ let app = new Vue({
             let url = new URL(location.href);
             if (searchText = url.searchParams.get('_text')) {
                 this.search_text = searchText
-                this.search_resource()
-            };
-            
+                await this.get_searchRes()
+                if (bundleId = url.searchParams.get('_bundle')) {
+                    this.get_bundle(bundleId)
+                };
+            }
         } catch (e) {
             console.log(e);
         }
@@ -241,96 +344,14 @@ console.json = (j) => {
         console.log(j)
     }
 }
-function compare_path(target, path) {
-    if (target.length == path.length) {
-        for (let i = 0; i < target.length; i++) {
-            if ((typeof target[i] == 'string') && (target[i] != path[i])) {
-                return false
-            } else if ((typeof target[i] == 'number') && (typeof parseInt(path[i]) != 'number')) {
-                return false
-            }
-        }
-        return true
-    } else {
-        return false
-    }
-}
 
-function parse_IS(obj, path) {
-    let res = {}
-    // Check type
-    if (check_sopClass(obj, path) && (obj[path[0]]['modality']['Code'] == 'SM')) {
-        res.viewerUrl = config.bluelight_WSI_baseURL
-        res.viewer = "BlueLight-WSI"
-    } else {
-        res.viewerUrl = config.bluelight_baseURL
-        res.viewer = "BlueLight"
-    }
-    // Get study UID
-    if (obj.identifier) {
-        let studyUID = obj.identifier.filter(r => { return r.system == 'urn:dicom:uid' })
-        if (studyUID.length == 1) {
-            res.studyUID = studyUID[0].value.replace(/[^\d.-]/g, '')
-        } else {
-            console.log(`Exception: multiple studyUID, ${obj.id}`)
-        }
-    }
-    return res
-}
-function check_sopClass(obj, path) {
-    for (let step of path) {
-        obj = obj[step]
-    }
-    console.json(obj)
-    return obj.sopClass.code.replace(/[^\d.-]/g, '') == '1.2.840.10008.5.1.4.1.1.77.1.6'
-}
-async function check_img(url) {
-    await axios(url)
-        .then(res => {
-            return true
-        }).catch(e => {
-            return false
-        })
-}
-
-async function make_carousel(urlList) {
-    let htmlStr = `<div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel"><div class="carousel-inner">`
-    let isActive = false
-    for (let item of urlList) {
-        if (!await check_img(item.url)) {
-            let imgURL = '../images/notfound.jpg'
-            htmlStr += `<div class="carousel-item ${!isActive && "active"}">
-                <img src="${imgURL}" class="d-block w-100" alt="${imgURL}">
-            </div>`
-            break
-        } else {
-            htmlStr += `<div class="carousel-item ${!isActive && "active"}">
-                <img src="${item.url}" class="d-block w-100" alt="${item.url}">
-                <div class="carousel-caption d-none d-md-block text-nowrap">                                
-                    <small>Study ID：${item.studyUID}</small><br/>
-                    <small>Series ID：${item.seriesUID}</small><br/>
-                    <small>Instance ID：${item.instanceUID}</small>
-                </div>
-            </div>`
-        }
-        isActive = true
-    }
-
-    htmlStr += `</div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </button>
-    </div>`
-    return htmlStr
-}
 
 function firstUpperCase(s) {
     return s[0].toUpperCase() + s.slice(1)
+}
+
+function viewBundle(id) {
+    document.location.href = `${location.href}&_bundle=${id}`;
 }
 
 /*
