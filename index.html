@@ -16,7 +16,7 @@
     <div id="app" class="container h-100">
         <div class="row align-items-center h-50">
             <div class="col text-center align-self-center">
-                <img class='img-fluid' src="./public/images/logo.png">
+                <a :href="location.hostname.includes('github.io')?'/micala_SIIM':'/'"><img class='img-fluid' src="./public/images/logo.png"></a>
                 <div class="input mt-5">
                     <div class="input-group" id="search_bar">
                         <button class="btn px-4" @click="search_resource()">
