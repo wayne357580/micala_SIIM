@@ -37,7 +37,7 @@ let app = new Vue({
             this.IS_display = loding_template
             this.IS_display_viewer = null
             this.IS_display_img = loding_template
-            this.IS_display_carousel = loding_template           
+            this.IS_display_carousel = loding_template
 
             // 根據[IS_display_path]從[IS_list]的第[IS_list_page]個物件取得並解析
             if (obj = this.IS_list[this.IS_list_page]) {
@@ -57,12 +57,13 @@ let app = new Vue({
                     if (attr = parse_IS(obj, this.IS_display_path)) {
                         htmlStr += `<a class="btn btn-secondary my-3 w-75" href="${attr.viewerUrl}?StudyInstanceUID=${attr.studyUID}" target="_blank">Open ${attr.viewer} viewer</a><br/>`
                         // load image
-                        let imgUrl = get_One_Wado_Url(obj, true)
-
-                        if (!await check_img(imgUrl)) {
-                            imgUrl = '../images/notfound.jpg'
+                        let imgObj = get_One_Wado_Url(obj, true)
+                        if (await check_img(imgObj.url)) {
+                            var imgUrl = imgObj.url
+                        } else {
+                            var imgUrl = '../images/notfound.jpg'
                         }
-                        console.log(imgUrl)
+                        console.log(await check_img(imgUrl))
                         htmlStr += `<img class='img-fluid w-100 img-thumbnail mb-2' src="${imgUrl}">`
                     }
                 }
@@ -118,30 +119,35 @@ let app = new Vue({
                 return obj.sopClass.code.replace(/[^\d.-]/g, '') == '1.2.840.10008.5.1.4.1.1.77.1.6'
             }
             async function check_img(url) {
-                await axios(url)
-                    .then(res => {
-                        return true
-                    }).catch(e => {
-                        return false
-                    })
+                return new Promise((reslove => {
+                    axios(url)
+                        .then(res => {
+                            return reslove(true)
+                        }).catch(e => {
+                            console.log('F', url)
+                            return reslove(false)
+                        })
+                }))
             }
             async function make_carousel(urlList) {
                 let htmlStr = `<div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel"><div class="carousel-inner">`
                 let isActive = false
                 for (let item of urlList) {
+                    let aa = await check_img(item.url)
                     if (!await check_img(item.url)) {
+                        console.log('Y')
                         let imgURL = '../images/notfound.jpg'
                         htmlStr += `<div class="carousel-item ${!isActive && "active"}">
                             <img src="${imgURL}" class="d-block w-100" alt="${imgURL}">
                         </div>`
                         break
                     } else {
-                        htmlStr += `<div class="carousel-item ${!isActive && "active"}">
-                            <img src="${item.url}" class="d-block w-100" alt="${item.url}">
+                        htmlStr += `<div class="carousel-item px-5 ${!isActive && "active"}">
+                            <img src="${item.url}" class="d-block border w-100" alt="${item.url}">
                             <div class="carousel-caption d-none d-md-block text-nowrap">                                
-                                <small>Study ID：${item.studyUID}</small><br/>
-                                <small>Series ID：${item.seriesUID}</small><br/>
-                                <small>Instance ID：${item.instanceUID}</small>
+                                <small class="bg-secondary">Study ID：${item.studyUID}</small><br/>
+                                <small class="bg-secondary">Series ID：${item.seriesUID}</small><br/>
+                                <small class="bg-secondary">Instance ID：${item.instanceUID}</small>
                             </div>
                         </div>`
                     }
