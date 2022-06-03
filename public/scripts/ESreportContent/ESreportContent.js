@@ -92,8 +92,8 @@ let app = new Vue({
             }
             function parse_IS(obj, path) {
                 let res = {}
-                // Check type
-                if (check_sopClass(obj, path) && (obj[path[1]]['modality']['Code'] == 'SM')) {
+                // Check type                
+                if (check_sopClass(obj, path) && (obj['series'][path[1]]['modality']['code'] == 'SM')) {
                     res.viewerUrl = config.bluelight_WSI_baseURL
                     res.viewer = "BlueLight-WSI"
                 } else {
