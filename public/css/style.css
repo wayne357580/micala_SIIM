@@ -48,6 +48,7 @@ body {
   border: 0px;
   box-shadow: -1px 0px 0px rgba(0,0,0,.3);
   padding-left: 1em;
+  height: 30px;
 }
 #search_bar .form-control input:focus
 {

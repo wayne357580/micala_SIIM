@@ -1,120 +1,44 @@
-<html ng-app="reportContentApp">
+<html>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="0;url=/public/html/ESreportContent.html" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="./public/scripts/external/autoComplete/autoComplete.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/reportContent/style_content.css">
     <link rel="stylesheet" href="./public/scripts/external/autoComplete/autoComplete.css">
-
     <title>Micala</title>
 </head>
 
 <body>
-    <div id="app" class="container-fluid h-100 px-4 py-3">
-        <!-- Header -->
-        <div class="row">
-            <div class="col-md-3 text-center p-2 mb-2">
-                <a href="/"><img class='img-fluid' src="./public/images/logo.png"></a>
-            </div>
-            <div class="col-md-9 text-center p-2 mb-2 align-self-center">
-                <div class="input">
+    <div id="app" class="container h-100">
+        <div class="row align-items-center h-50">
+            <div class="col text-center align-self-center">
+                <img class='img-fluid' src="./public/images/logo.png">
+                <div class="input mt-5">
                     <div class="input-group" id="search_bar">
-                        <div class="input-group-prepend">
-                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown">
-                                Image
-                            </button>
-                            <div class="dropdown-menu Image">
-                                <a class="dropdown-item" id="di_Image" href="#">
-                                    <div class="check-box checked"></div>
-                                    <span>Image</span>
-                                </a>
-                                <a class="dropdown-item" id="di_Report" href="#">
-                                    <div class="check-box"></div>
-                                    <span>Report</span>
-                                </a>
-                            </div>
+                        <div class="d-flex align-items-center px-4">
+                            <i class="bi bi-search align-items-center"></i>
                         </div>
                         <div class="form-control searchBar">
                             <input type="text" placeholder="Search" v-model="bundle_url" @change="get_bundle">
                         </div>
                     </div>
-                    <div class="adjust_icon btn btn-primary" type="button" class="" data-toggle="modal" data-target="#exampleModal"></div>
-                    <!-- Modal -->
-                    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                                <div class="modal-body">
-                                    <ng-include src="'/qidoSearchOption.html'"></ng-include>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" ng-click="test();">確定</button>
-                                    <button type="button" class="btn btn-primary">清除</button>
-                                    <button type="button" class="btn btn-warning" onclick="$('#exampleModal').modal('hide')">close</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
-            </div>
-        </div>
-        <!-- Content -->
-        <div class="row">
-            <!-- ImagingStudy -->
-            <div class="col-md-6 p-3 border overflow-auto" style="max-height: 43rem;">
-                <div class="row">
-                    <div class="col-md-6 text-md-start text-center text-nowrap mb-2">
-                        <h3 class="d-inline">ImagingStudy<span class="badge rounded-pill bg-success ms-2">{{IS_list.length}}</span></h3>                        
-                    </div>
-                    <div class="col-md-6 text-md-end text-center mb-2">                                 
-                        <button class="btn btn-sm btn-secondary" @click="change_page('IS',-1)" :disabled="IS_list_page<=0"><i class="bi bi-chevron-left" :disabled="IS_list_page<=0"></i>Prev</button>
-                        <button class="btn btn-sm btn-secondary" @click="change_page('IS',0)"><strong>{{IS_list_page + 1}} / {{IS_list.length}}</strong></button>
-                        <button class="btn btn-sm btn-secondary" @click="change_page('IS',1)" :disabled="IS_list_page>=IS_list.length-1">Next<i class="bi bi-chevron-right"></i></button>    
-                    </div>
-                    <div class="col-12">
-                        <button class="btn btn-link text-dark" @click="IS_display_path.pop();IS_display_refresh"><i class="bi bi-arrow-left-circle"></i></button>
-                        / <div class="d-inline-block" v-html="parse_path(IS_display_path)"></div>
-                        <a class="btn btn-sm btn-warning float-end" :href="IS_list[IS_list_page] && IS_list[IS_list_page].fullUrl" target="_blank"><i class="bi bi-box-arrow-up-right"></i>  Open</a>
-                    </div>
-                    <div class="col-12">
-                        <div class='text-center table-responsive mt-2' v-html="IS_display">No data</div>
-                    </div>
-                </div>
-            </div>
-            <!-- DiagnosticReport -->
-            <div class="col-md-6 p-3 border overflow-auto" style="max-height: 43rem;">
-                <div class="row">
-                    <div class="col-md-6 text-md-start text-center text-nowrap mb-2">
-                        <h3 class="d-inline">DiagnosticReport<span class="badge rounded-pill bg-success ms-2">{{DR_list.length}}</span></h3>
-                    </div>
-                    <div class="col-md-6 text-md-end text-center mb-2">
-                        <button class="btn btn-sm btn-secondary" @click="change_page('DR',-1)" :disabled="DR_list_page<=0"><i class="bi bi-chevron-left"></i>Prev</button>
-                        <button class="btn btn-sm btn-secondary" @click="change_page('DR',0)"><strong>{{DR_list_page + 1}} / {{DR_list.length}}</strong></button>
-                        <button class="btn btn-sm btn-secondary" @click="change_page('DR',1)" :disabled="DR_list_page>=DR_list.length-1">Next<i class="bi bi-chevron-right"></i></button>
-                    </div>
-                    <div class="col-12">
-                        <button class="btn btn-link text-dark" @click="DR_display_path.pop();DR_display_refresh"><i class="bi bi-arrow-left-circle"></i></button>
-                        / <div class="d-inline-block" v-html="parse_path(DR_display_path)"></div>
-                        <a class="btn btn-sm btn-warning float-end" :href="DR_list[DR_list_page] && DR_list[DR_list_page].fullUrl" target="_blank"><i class="bi bi-box-arrow-up-right"></i>  Open</a>
-                    </div>
-                    <div class="col-12">
-                        <div class='text-center table-responsive mt-2' v-html="DR_display">No data</div>
-                    </div>
-                </div>
-                
-                
             </div>
         </div>
     </div>
 </body>
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="./public/scripts/common.js"></script>
-<script src="./public/scripts/ESreportContent/ESreportContent.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@7.2.0/dist/js/autoComplete.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.9/angular.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+<script src="./public/scripts/config.js"></script>
+<script src="./public/scripts/index/index.js"></script>
 
 </html>

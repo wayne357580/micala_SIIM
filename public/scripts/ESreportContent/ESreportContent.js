@@ -1,11 +1,16 @@
-const loding_template = `<img src="./public/images/loading.gif"></div>`
+const loding_template = `<img src="../images/loading.gif"></div>`
 const nodata_template = `<h3>No data<h3/>`;
 
 let app = new Vue({
     el: '#app',
     data() {
         return {
-            search_type: 'All',
+            display_mode: 'search',
+            /* Search View */
+            search_text: "",
+            result_display: "",
+            result_list: [],
+            /* Result view */
             bundle: null,
             IS_display: nodata_template, // 顯示在IS的html
             IS_display_path: [], // fetch path
@@ -22,6 +27,7 @@ let app = new Vue({
     created: function () {
         window.IS_btnClick = this.IS_btnClick
         window.DR_btnClick = this.DR_btnClick
+        window.get_bundle = this.get_bundle
         //https://blog.csdn.net/yan_dk/article/details/109352118
     },
     computed: {
@@ -29,12 +35,20 @@ let app = new Vue({
             // 根據[IS_display_path]從[IS_list]的第[IS_list_page]個物件取得並解析
             this.IS_display = loding_template
             if (obj = this.IS_list[this.IS_list_page]) {
-                obj = obj.resource
+                obj = obj.resource                
                 for (let step of this.IS_display_path) {
                     obj = obj[step]
                 }
+                let htmlStr = this.parse_object(true, obj, 'IS')  
 
-                this.IS_display = this.parse_object(true, obj, 'IS')
+                // Imaging obj
+                console.json(this.IS_display_path)
+                if(this.IS_display_path == ['series' ]){}
+
+                // 生成網頁
+                this.IS_display = htmlStr
+                
+
             } else {
                 this.IS_display = nodata_template
             }
@@ -51,9 +65,49 @@ let app = new Vue({
             } else {
                 this.DR_display = nodata_template
             }
+        },
+        result_display_result() {
+            let htmlStr = ``
+            for (let i = 0; i < this.result_list.length; i++) {
+                let bundle = this.result_list[i]
+                let IS = this.get_resource(bundle.resource.entry, "ImagingStudy")
+                let DR = this.get_resource(bundle.resource.entry, "DiagnosticReport")
+                htmlStr += `<div class="card mb-2">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <span>${i+1}. Resource ID：</span>
+                        <button class="btn btn-link p-0 m-0" onclick="get_bundle(${i})">${bundle.resource.id}</button>
+                    </h4>                                      
+                </div>
+                <div class="card-body">                  
+                  <div>ImagingStudy<span class="badge rounded-pill bg-success ms-2">${IS.length}</span></div>
+                  <div>DiagnosticReport<span class="badge rounded-pill bg-success ms-2">${DR.length}</span></div>
+                </div>
+              </div>`
+            }
+            this.result_display = htmlStr
         }
     },
     methods: {
+        /* Search */
+        async search_resource() {
+            this.display_mode = 'search'
+            this.result_display = loding_template
+            console.log(`${config.burni_server_baseURL}/fhir/Bundle?_text=${this.search_text}`)
+            //let searchURL = `${config.burni_server_baseURL}/fhir/Bundle?_text=${this.search_text}`
+            let searchURL = "/bundle-searchset.json"
+            await axios.get(searchURL)
+                .then(res => {
+                    if (res.data.entry) {
+                        this.result_list = res.data.entry
+                        this.result_display_result
+                    }
+                }).catch(err => {
+                    alert("Can't get bundle")
+                    console.log(err)
+                })
+        },
+        /* Result */
         get_resource(arr, resource) {
             return arr.filter(r => { return r.resource.resourceType == resource })
         },
@@ -123,30 +177,29 @@ let app = new Vue({
                 return `<a class="btn btn-link" href="${fullUrl.split('/fhir')[0]}/fhir/${ref}" target="_blank">${ref}</a>`
             }
         },
-        async get_bundle(){
+        get_bundle(idx) {
             this.IS_display = loding_template
             this.DR_display = loding_template
-            await axios.get(this.bundle_url)
-                .then(res => {
-                    this.bundle = res.data
-                    if (entry = this.bundle.entry) {
-                        // Get resource
-                        this.IS_list = this.get_resource(entry, 'ImagingStudy')
-                        this.DR_list = this.get_resource(entry, 'DiagnosticReport')
-                        this.IS_display_refresh
-                        this.DR_display_refresh
-                    }
-                }).catch(err => {
-                    alert("Can't get bundle")
-                    console.log(err)
-                    this.IS_display = nodata_template
-                    this.DR_display = nodata_template
-                })
+            this.display_mode = 'result'
+
+            this.bundle = this.result_list[idx].resource
+            console.json(this.bundle)
+            if (entry = this.bundle.entry) {
+                // Get resource
+                this.IS_list = this.get_resource(entry, 'ImagingStudy')
+                this.DR_list = this.get_resource(entry, 'DiagnosticReport')
+                this.IS_display_refresh
+                this.DR_display_refresh
+            }
+        },
+        back_search(){
+            this.display_mode = 'search'
+            this.bundle = null
         }
     },
     async mounted() {
         try {
-           this.get_bundle()
+            this.search_resource()
         } catch (e) {
             console.log(e);
         }

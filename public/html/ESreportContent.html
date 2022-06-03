@@ -1,0 +1,99 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/reportContent/style_content.css">
+    <link rel="stylesheet" href="../scripts/external/autoComplete/autoComplete.css">
+
+    <title>Micala</title>
+</head>
+
+<body>
+    <div id="app" class="container-fluid h-100 px-4 py-3">
+        <!-- Header -->
+        <div class="row">
+            <div class="col-md-3 text-center p-2 mb-2">
+                <a href="/"><img class='img-fluid' src="../images/logo.png"></a>
+            </div>
+            <div class="col-md-9 text-center p-2 mb-2 align-self-center">
+                <div class="input">
+                    <div class="input-group" id="search_bar">
+                        <button class="btn px-4" @click="search_resource()">
+                            <i class="bi bi-search align-items-center"></i>
+                        </button>
+                        <div class="form-control searchBar">
+                            <input type="text" placeholder="Search" v-model="search_text" v-on:keyup.enter="search_resource()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Search -->
+        <div class="row" v-bind:class="{ 'd-none': display_mode!='search'}">            
+            <div class="col-md-9 col-12 offset-md-3" v-html="result_display"></div>
+        </div>
+        <!-- Result -->
+        <div class="row" v-bind:class="{ 'd-none': display_mode!='result'}">            
+            <!-- ImagingStudy -->
+            <div class="col-md-12 mb-2 bg-light p-2 border">
+                <button class="btn btn-sm btn-secondary d-inline"  @click="back_search()"><i class="bi bi-caret-left-fill"></i>Back</button>
+                <h3 class="d-inline align-middle mb-0 ms-2">Bundle：{{bundle && bundle.id}}</h3>
+            </div>
+            <div class="col-md-6 p-3 border overflow-auto mb-2" style="min-height: 40rem; max-height: 40rem;">
+                <div class="row">
+                    <div class="col-md-6 text-md-start text-center text-nowrap mb-2">
+                        <h3 class="d-inline">ImagingStudy<span class="badge rounded-pill bg-success ms-2">{{IS_list.length}}</span></h3>                        
+                    </div>
+                    <div class="col-md-6 text-md-end text-center mb-2">                                 
+                        <button class="btn btn-sm btn-secondary" @click="change_page('IS',-1)" :disabled="IS_list_page<=0"><i class="bi bi-chevron-left" :disabled="IS_list_page<=0"></i>Prev</button>
+                        <button class="btn btn-sm btn-secondary" @click="change_page('IS',0)"><strong>{{IS_list_page + 1}} / {{IS_list.length}}</strong></button>
+                        <button class="btn btn-sm btn-secondary" @click="change_page('IS',1)" :disabled="IS_list_page>=IS_list.length-1">Next<i class="bi bi-chevron-right"></i></button>    
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-link text-dark" @click="IS_display_path.pop();IS_display_refresh"><i class="bi bi-arrow-left-circle"></i></button>
+                        / <div class="d-inline-block" v-html="parse_path(IS_display_path)"></div>                        
+                        <a class="btn btn-sm btn-warning float-end" :href="IS_list[IS_list_page] && IS_list[IS_list_page].fullUrl" target="_blank"><i class="bi bi-box-arrow-up-right"></i>  Open</a>
+                        <a class="btn btn-sm btn-info float-end me-2" target="_blank"><i class="bi bi-eye"></i>  Viewer</a>
+                    </div>
+                    <div class="col-12">
+                        <div class='text-center table-responsive mt-2' v-html="IS_display">No data</div>
+                    </div>
+                </div>
+            </div>
+            <!-- DiagnosticReport -->
+            <div class="col-md-6 p-3 border overflow-auto mb-2" style="min-height: 40rem; max-height: 40rem;">
+                <div class="row">
+                    <div class="col-md-6 text-md-start text-center text-nowrap mb-2">
+                        <h3 class="d-inline">DiagnosticReport<span class="badge rounded-pill bg-success ms-2">{{DR_list.length}}</span></h3>
+                    </div>
+                    <div class="col-md-6 text-md-end text-center mb-2">
+                        <button class="btn btn-sm btn-secondary" @click="change_page('DR',-1)" :disabled="DR_list_page<=0"><i class="bi bi-chevron-left"></i>Prev</button>
+                        <button class="btn btn-sm btn-secondary" @click="change_page('DR',0)"><strong>{{DR_list_page + 1}} / {{DR_list.length}}</strong></button>
+                        <button class="btn btn-sm btn-secondary" @click="change_page('DR',1)" :disabled="DR_list_page>=DR_list.length-1">Next<i class="bi bi-chevron-right"></i></button>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-link text-dark" @click="DR_display_path.pop();DR_display_refresh"><i class="bi bi-arrow-left-circle"></i></button>
+                        / <div class="d-inline-block" v-html="parse_path(DR_display_path)"></div>
+                        <a class="btn btn-sm btn-warning float-end" :href="DR_list[DR_list_page] && DR_list[DR_list_page].fullUrl" target="_blank"><i class="bi bi-box-arrow-up-right"></i>  Open</a>
+                    </div>
+                    <div class="col-12">
+                        <div class='text-center table-responsive mt-2' v-html="DR_display">No data</div>
+                    </div>
+                </div>    
+            </div>
+        </div>
+    </div>
+</body>
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="../scripts/config.js"></script>
+<script src="../scripts/ESreportContent/ESreportContent.js"></script>
+
+</html>
