@@ -3,7 +3,7 @@ const config = {
     fhir_server_baseURL: "https://siim.hapi.fhir.tw",
     dicom_server_baseURL:"https://siim.raccoon.fhir.tw",
     bluelight_baseURL: "https://cylab.dicom.tw/cylab/siim/bluelight/html/start.html",
-    bluelight_WSI_baseURL: "https://cylab.dicom.tw/cylab/siim/bluelight-WSI/html/index.html",
+    bluelight_WSI_baseURL: "https://cylab.dicom.tw/bluelight/bluelight-WSI/html/index.html",
     github_repository_name: "micala_SIIM"
 }
 const envConfig = {
