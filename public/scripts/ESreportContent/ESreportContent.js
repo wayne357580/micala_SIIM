@@ -14,6 +14,7 @@ let app = new Vue({
             bundle: null,
             IS_display: nodata_template, // 顯示在IS的html
             IS_display_path: [], // fetch path
+            IS_display_viewer: null,
             IS_list: [], // ImagingStudy resource 
             IS_list_page: 0,
             IS_display_img: loding_template,
@@ -34,7 +35,10 @@ let app = new Vue({
     computed: {
         async IS_display_refresh() {
             this.IS_display = loding_template
-            this.IS_display_carousel = carouselStr = loding_template
+            this.IS_display_viewer = null
+            this.IS_display_img = loding_template
+            this.IS_display_carousel = loding_template           
+
             // 根據[IS_display_path]從[IS_list]的第[IS_list_page]個物件取得並解析
             if (obj = this.IS_list[this.IS_list_page]) {
                 obj = obj.resource
@@ -44,7 +48,11 @@ let app = new Vue({
                 }
                 let htmlStr = this.parse_object(true, targetObj, 'IS')
 
-                // Imaging obj
+                // Set viewer
+                let objAttr = parse_IS(obj, ['series', 0, 'instance', 0])
+                this.IS_display_viewer = `${objAttr.viewerUrl}?StudyInstanceUID=${objAttr.studyUID}`
+
+                // is Imaging obj
                 if (compare_path(['series', -1, 'instance', -1], this.IS_display_path)) {
                     if (attr = parse_IS(obj, this.IS_display_path)) {
                         htmlStr += `<a class="btn btn-secondary my-3 w-75" href="${attr.viewerUrl}?StudyInstanceUID=${attr.studyUID}" target="_blank">Open ${attr.viewer} viewer</a><br/>`
@@ -85,7 +93,7 @@ let app = new Vue({
             function parse_IS(obj, path) {
                 let res = {}
                 // Check type
-                if (check_sopClass(obj, path) && (obj[path[0]]['modality']['Code'] == 'SM')) {
+                if (check_sopClass(obj, path) && (obj[path[1]]['modality']['Code'] == 'SM')) {
                     res.viewerUrl = config.bluelight_WSI_baseURL
                     res.viewer = "BlueLight-WSI"
                 } else {
@@ -107,7 +115,6 @@ let app = new Vue({
                 for (let step of path) {
                     obj = obj[step]
                 }
-                console.json(obj)
                 return obj.sopClass.code.replace(/[^\d.-]/g, '') == '1.2.840.10008.5.1.4.1.1.77.1.6'
             }
             async function check_img(url) {
@@ -294,7 +301,6 @@ let app = new Vue({
             this.IS_display = loding_template
             this.DR_display = loding_template
             this.display_mode = 'result'
-            console.log(JSON.parse(JSON.stringify(this.result_list)))
             let matchList = this.result_list.filter(r => { return r.resource.id == id })
             if (matchList.length == 1) {
                 this.bundle = matchList[0].resource
