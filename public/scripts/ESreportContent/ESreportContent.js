@@ -89,7 +89,7 @@ let app = new Vue({
                     let bundle = this.result_list[i]
                     let IS = this.get_resource(bundle.resource.entry, "ImagingStudy")
                     let DR = this.get_resource(bundle.resource.entry, "DiagnosticReport")
-                    htmlStr += `<div class="card mb-2">
+                    htmlStr += `<div class="card mb-2 text-start">
                     <div class="card-header">
                         <h4 class="card-title mb-0">
                             <span>${i + 1}. Resource ID：</span>
