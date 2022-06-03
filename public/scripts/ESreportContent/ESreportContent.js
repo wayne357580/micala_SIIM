@@ -16,6 +16,8 @@ let app = new Vue({
             IS_display_path: [], // fetch path
             IS_list: [], // ImagingStudy resource 
             IS_list_page: 0,
+            IS_display_img: loding_template,
+            IS_display_mode: true,
 
             DR_display: nodata_template, // 顯示在DR的html
             DR_display_path: [], // fetch path
@@ -31,9 +33,10 @@ let app = new Vue({
         //https://blog.csdn.net/yan_dk/article/details/109352118
     },
     computed: {
-        IS_display_refresh() {
-            // 根據[IS_display_path]從[IS_list]的第[IS_list_page]個物件取得並解析
+        async IS_display_refresh() {
             this.IS_display = loding_template
+            this.IS_display_carousel = carouselStr = loding_template
+            // 根據[IS_display_path]從[IS_list]的第[IS_list_page]個物件取得並解析
             if (obj = this.IS_list[this.IS_list_page]) {
                 obj = obj.resource
                 let targetObj = obj
@@ -44,57 +47,24 @@ let app = new Vue({
 
                 // Imaging obj
                 if (compare_path(['series', -1, 'instance', -1], this.IS_display_path)) {
-                    if (attr= parse_IS(obj, this.IS_display_path)) {
-                        htmlStr += `<a class="btn btn-secondary my-3 w-75" href="${attr.viewerUrl}?StudyInstanceUID=${attr.studyUID}" target="_blank">Open ${attr.viewer} viewer</a>`
+                    if (attr = parse_IS(obj, this.IS_display_path)) {
+                        htmlStr += `<a class="btn btn-secondary my-3 w-75" href="${attr.viewerUrl}?StudyInstanceUID=${attr.studyUID}" target="_blank">Open ${attr.viewer} viewer</a><br/>`
+                        // load image
+                        let imgUrl = get_One_Wado_Url(obj, true)
+
+                        if (!await check_img(imgUrl)) {
+                            imgUrl = '../images/notfound.jpg'
+                        }
+                        console.log(imgUrl)
+                        htmlStr += `<img class='img-fluid w-100 img-thumbnail mb-2' src="${imgUrl}">`
                     }
                 }
 
                 // 生成網頁
+                if (this.IS_display_path.length == 0) {
+                    this.IS_display_img = await make_carousel(getAllWadoUrl(obj, true))
+                }
                 this.IS_display = htmlStr
-
-
-                function compare_path(target, path) {
-                    if (target.length == path.length) {
-                        for (let i = 0; i < target.length; i++) {
-                            if ((typeof target[i] == 'string') && (target[i] != path[i])) {
-                                return false
-                            } else if ((typeof target[i] == 'number') && (typeof parseInt(path[i]) != 'number')) {
-                                return false
-                            }
-                        }
-                        return true
-                    } else {
-                        return false
-                    }
-                }
-                function parse_IS(obj, path) {
-                    let res = {}
-                    // Check type
-                    if (check_sopClass(obj, path) && (obj[path[0]]['modality']['Code'] == 'SM')){
-                        res.viewerUrl = config.bluelight_WSI_baseURL
-                        res.viewer = "BlueLight-WSI"
-                    }else{
-                        res.viewerUrl = config.bluelight_baseURL
-                        res.viewer = "BlueLight"
-                    }
-                    // Get study UID
-                    if (obj.identifier) {
-                        let studyUID = obj.identifier.filter(r => { return r.system == 'urn:dicom:uid' })
-                        if (studyUID.length == 1) {
-                            res.studyUID = studyUID[0].value.replace(/[^\d.-]/g, '')
-                        } else {
-                            console.log(`Exception: multiple studyUID, ${obj.id}`)
-                        }
-                    }                    
-                    return res
-                }
-                function check_sopClass(obj, path){
-                    for (let step of path) {
-                        obj = obj[step]
-                    }
-                    console.json(obj)
-                    return obj.sopClass.code.replace(/[^\d.-]/g, '') == '1.2.840.10008.5.1.4.1.1.77.1.6'
-                }
             } else {
                 this.IS_display = nodata_template
             }
@@ -257,11 +227,92 @@ console.json = (j) => {
         console.log(j)
     }
 }
+function compare_path(target, path) {
+    if (target.length == path.length) {
+        for (let i = 0; i < target.length; i++) {
+            if ((typeof target[i] == 'string') && (target[i] != path[i])) {
+                return false
+            } else if ((typeof target[i] == 'number') && (typeof parseInt(path[i]) != 'number')) {
+                return false
+            }
+        }
+        return true
+    } else {
+        return false
+    }
+}
 
+function parse_IS(obj, path) {
+    let res = {}
+    // Check type
+    if (check_sopClass(obj, path) && (obj[path[0]]['modality']['Code'] == 'SM')) {
+        res.viewerUrl = config.bluelight_WSI_baseURL
+        res.viewer = "BlueLight-WSI"
+    } else {
+        res.viewerUrl = config.bluelight_baseURL
+        res.viewer = "BlueLight"
+    }
+    // Get study UID
+    if (obj.identifier) {
+        let studyUID = obj.identifier.filter(r => { return r.system == 'urn:dicom:uid' })
+        if (studyUID.length == 1) {
+            res.studyUID = studyUID[0].value.replace(/[^\d.-]/g, '')
+        } else {
+            console.log(`Exception: multiple studyUID, ${obj.id}`)
+        }
+    }
+    return res
+}
+function check_sopClass(obj, path) {
+    for (let step of path) {
+        obj = obj[step]
+    }
+    console.json(obj)
+    return obj.sopClass.code.replace(/[^\d.-]/g, '') == '1.2.840.10008.5.1.4.1.1.77.1.6'
+}
+async function check_img(url) {
+    await axios(url)
+        .then(res => {
+            return true
+        }).catch(e => {
+            return false
+        })
+}
 
+async function make_carousel(urlList) {
+    let htmlStr = `<div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel"><div class="carousel-inner">`
+    let isActive = false
+    for (let item of urlList) {
+        if (!await check_img(item.url)) {
+            let imgURL = '../images/notfound.jpg'
+            htmlStr += `<div class="carousel-item ${!isActive && "active"}">
+                <img src="${imgURL}" class="d-block w-100" alt="${imgURL}">
+            </div>`
+        } else {
+            htmlStr += `<div class="carousel-item ${!isActive && "active"}">
+                <img src="${item.url}" class="d-block w-100" alt="${item.url}">
+                <div class="carousel-caption d-none d-md-block text-nowrap">                                
+                    <small>Study ID：${item.studyUID}</small><br/>
+                    <small>Series ID：${item.seriesUID}</small><br/>
+                    <small>Instance ID：${item.instanceUID}</small>
+                </div>
+            </div>`
+        }
+        isActive = true
+    }
 
-
-
+    htmlStr += `</div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>`
+    return htmlStr
+}
 
 function firstUpperCase(s) {
     return s[0].toUpperCase() + s.slice(1)
