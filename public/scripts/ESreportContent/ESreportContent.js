@@ -110,7 +110,7 @@ let app = new Vue({
             this.display_mode = 'search'
             this.result_display = loding_template
             //let searchURL = `${config.burni_server_baseURL}/fhir/Bundle?_text=${this.search_text}`
-            let searchURL = "/bundle-searchset.json"
+            let searchURL = "../../bundle-searchset.json"
             await axios.get(searchURL)
                 .then(res => {
                     if (res.data.entry) {
