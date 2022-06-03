@@ -35,20 +35,66 @@ let app = new Vue({
             // 根據[IS_display_path]從[IS_list]的第[IS_list_page]個物件取得並解析
             this.IS_display = loding_template
             if (obj = this.IS_list[this.IS_list_page]) {
-                obj = obj.resource                
+                obj = obj.resource
+                let targetObj = obj
                 for (let step of this.IS_display_path) {
-                    obj = obj[step]
+                    targetObj = targetObj[step]
                 }
-                let htmlStr = this.parse_object(true, obj, 'IS')  
+                let htmlStr = this.parse_object(true, targetObj, 'IS')
 
                 // Imaging obj
-                console.json(this.IS_display_path)
-                if(this.IS_display_path == ['series' ]){}
+                if (compare_path(['series', -1, 'instance', -1], this.IS_display_path)) {
+                    if (attr= parse_IS(obj, this.IS_display_path)) {
+                        htmlStr += `<a class="btn btn-secondary my-3 w-75" href="${attr.viewerUrl}?StudyInstanceUID=${attr.studyUID}" target="_blank">Open ${attr.viewer} viewer</a>`
+                    }
+                }
 
                 // 生成網頁
                 this.IS_display = htmlStr
-                
 
+
+                function compare_path(target, path) {
+                    if (target.length == path.length) {
+                        for (let i = 0; i < target.length; i++) {
+                            if ((typeof target[i] == 'string') && (target[i] != path[i])) {
+                                return false
+                            } else if ((typeof target[i] == 'number') && (typeof parseInt(path[i]) != 'number')) {
+                                return false
+                            }
+                        }
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+                function parse_IS(obj, path) {
+                    let res = {}
+                    // Check type
+                    if (check_sopClass(obj, path) && (obj[path[0]]['modality']['Code'] == 'SM')){
+                        res.viewerUrl = config.bluelight_WSI_baseURL
+                        res.viewer = "BlueLight-WSI"
+                    }else{
+                        res.viewerUrl = config.bluelight_baseURL
+                        res.viewer = "BlueLight"
+                    }
+                    // Get study UID
+                    if (obj.identifier) {
+                        let studyUID = obj.identifier.filter(r => { return r.system == 'urn:dicom:uid' })
+                        if (studyUID.length == 1) {
+                            res.studyUID = studyUID[0].value.replace(/[^\d.-]/g, '')
+                        } else {
+                            console.log(`Exception: multiple studyUID, ${obj.id}`)
+                        }
+                    }                    
+                    return res
+                }
+                function check_sopClass(obj, path){
+                    for (let step of path) {
+                        obj = obj[step]
+                    }
+                    console.json(obj)
+                    return obj.sopClass.code.replace(/[^\d.-]/g, '') == '1.2.840.10008.5.1.4.1.1.77.1.6'
+                }
             } else {
                 this.IS_display = nodata_template
             }
@@ -75,7 +121,7 @@ let app = new Vue({
                 htmlStr += `<div class="card mb-2">
                 <div class="card-header">
                     <h4 class="card-title mb-0">
-                        <span>${i+1}. Resource ID：</span>
+                        <span>${i + 1}. Resource ID：</span>
                         <button class="btn btn-link p-0 m-0" onclick="get_bundle(${i})">${bundle.resource.id}</button>
                     </h4>                                      
                 </div>
@@ -93,7 +139,6 @@ let app = new Vue({
         async search_resource() {
             this.display_mode = 'search'
             this.result_display = loding_template
-            console.log(`${config.burni_server_baseURL}/fhir/Bundle?_text=${this.search_text}`)
             //let searchURL = `${config.burni_server_baseURL}/fhir/Bundle?_text=${this.search_text}`
             let searchURL = "/bundle-searchset.json"
             await axios.get(searchURL)
@@ -183,7 +228,6 @@ let app = new Vue({
             this.display_mode = 'result'
 
             this.bundle = this.result_list[idx].resource
-            console.json(this.bundle)
             if (entry = this.bundle.entry) {
                 // Get resource
                 this.IS_list = this.get_resource(entry, 'ImagingStudy')
@@ -192,7 +236,7 @@ let app = new Vue({
                 this.DR_display_refresh
             }
         },
-        back_search(){
+        back_search() {
             this.display_mode = 'search'
             this.bundle = null
         }

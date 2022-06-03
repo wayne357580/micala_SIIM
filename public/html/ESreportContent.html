@@ -56,8 +56,7 @@
                     <div class="col-12">
                         <button class="btn btn-link text-dark" @click="IS_display_path.pop();IS_display_refresh"><i class="bi bi-arrow-left-circle"></i></button>
                         / <div class="d-inline-block" v-html="parse_path(IS_display_path)"></div>                        
-                        <a class="btn btn-sm btn-warning float-end" :href="IS_list[IS_list_page] && IS_list[IS_list_page].fullUrl" target="_blank"><i class="bi bi-box-arrow-up-right"></i>  Open</a>
-                        <a class="btn btn-sm btn-info float-end me-2" target="_blank"><i class="bi bi-eye"></i>  Viewer</a>
+                        <a class="btn btn-sm btn-warning float-end" :href="IS_list[IS_list_page] && IS_list[IS_list_page].fullUrl" target="_blank"><i class="bi bi-box-arrow-up-right"></i>  Open resource</a>                        
                     </div>
                     <div class="col-12">
                         <div class='text-center table-responsive mt-2' v-html="IS_display">No data</div>
