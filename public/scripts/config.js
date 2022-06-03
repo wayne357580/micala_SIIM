@@ -1,5 +1,5 @@
 const config = {
-    burni_server_baseURL: "https://burni.fhir.tw",
+    burni_server_baseURL: "https://5f90-115-43-135-60.jp.ngrok.io", //"https://burni.fhir.tw"
     fhir_server_baseURL: "https://siim.hapi.fhir.tw",
     dicom_server_baseURL:"https://siim.raccoon.fhir.tw",
     bluelight_baseURL: "https://cylab.dicom.tw/cylab/siim/bluelight/html/start.html",

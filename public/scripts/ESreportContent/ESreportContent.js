@@ -84,23 +84,28 @@ let app = new Vue({
         },
         result_display_result() {
             let htmlStr = ``
-            for (let i = 0; i < this.result_list.length; i++) {
-                let bundle = this.result_list[i]
-                let IS = this.get_resource(bundle.resource.entry, "ImagingStudy")
-                let DR = this.get_resource(bundle.resource.entry, "DiagnosticReport")
-                htmlStr += `<div class="card mb-2">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">
-                        <span>${i + 1}. Resource ID：</span>
-                        <button class="btn btn-link p-0 m-0" onclick="get_bundle(${i})">${bundle.resource.id}</button>
-                    </h4>                                      
-                </div>
-                <div class="card-body">                  
-                  <div>ImagingStudy<span class="badge rounded-pill bg-success ms-2">${IS.length}</span></div>
-                  <div>DiagnosticReport<span class="badge rounded-pill bg-success ms-2">${DR.length}</span></div>
-                </div>
-              </div>`
+            if(this.result_list.length>0){
+                for (let i = 0; i < this.result_list.length; i++) {
+                    let bundle = this.result_list[i]
+                    let IS = this.get_resource(bundle.resource.entry, "ImagingStudy")
+                    let DR = this.get_resource(bundle.resource.entry, "DiagnosticReport")
+                    htmlStr += `<div class="card mb-2">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">
+                            <span>${i + 1}. Resource ID：</span>
+                            <button class="btn btn-link p-0 m-0" onclick="get_bundle(${i})">${bundle.resource.id}</button>
+                        </h4>                                      
+                    </div>
+                    <div class="card-body">                  
+                      <div>ImagingStudy<span class="badge rounded-pill bg-success ms-2">${IS.length}</span></div>
+                      <div>DiagnosticReport<span class="badge rounded-pill bg-success ms-2">${DR.length}</span></div>
+                    </div>
+                  </div>`
+                }
+            }else{
+                htmlStr = `<div class='h-100 text-center'><h3 class='mb-0'>No data</h3></div>`
             }
+            
             this.result_display = htmlStr
         }
     },
@@ -109,16 +114,20 @@ let app = new Vue({
         async search_resource() {
             this.display_mode = 'search'
             this.result_display = loding_template
-            //let searchURL = `${config.burni_server_baseURL}/fhir/Bundle?_text=${this.search_text}`
-            let searchURL = "../scripts/bundle-searchset.json"
+            let searchURL = `${config.burni_server_baseURL}/fhir/Bundle?_text=${this.search_text}`
+            console.log(searchURL)
+            //let searchURL = "../scripts/bundle-searchset.json"
             await axios.get(searchURL)
                 .then(res => {
                     if (res.data.entry) {
                         this.result_list = res.data.entry
                         this.result_display_result
+                    } else {
+                        this.result_list = []
+                        this.result_display_result
                     }
                 }).catch(err => {
-                    alert("Can't get bundle")
+                    alert(err.message)
                     console.log(err)
                 })
         },
@@ -213,7 +222,12 @@ let app = new Vue({
     },
     async mounted() {
         try {
-            this.search_resource()
+            let url = new URL(location.href);
+            if (searchText = url.searchParams.get('_text')) {
+                this.search_text = searchText
+                this.search_resource()
+            };
+            
         } catch (e) {
             console.log(e);
         }
@@ -288,6 +302,7 @@ async function make_carousel(urlList) {
             htmlStr += `<div class="carousel-item ${!isActive && "active"}">
                 <img src="${imgURL}" class="d-block w-100" alt="${imgURL}">
             </div>`
+            break
         } else {
             htmlStr += `<div class="carousel-item ${!isActive && "active"}">
                 <img src="${item.url}" class="d-block w-100" alt="${item.url}">

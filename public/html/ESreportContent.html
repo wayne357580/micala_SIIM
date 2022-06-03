@@ -34,7 +34,12 @@
         </div>
         <!-- Search -->
         <div class="row" v-bind:class="{ 'd-none': display_mode!='search'}">
-            <div class="col-md-9 col-12 offset-md-3" v-html="result_display"></div>
+            <div class="col-md-3 col-12 text-center">
+                <div class="alert alert-info p-2" role="alert">
+                    <strong class="mb-0">Match <strong class="text-danger">{{result_list.length}}</strong> results</strong>
+                </div>
+            </div>
+            <div class="col-md-9 col-12" v-html="result_display"></div>
         </div>
         <!-- Result -->
         <div class="row" v-bind:class="{ 'd-none': display_mode!='result'}">
@@ -64,7 +69,7 @@
                     <div class="col-12" :class="{'d-none':IS_display_mode}">
                         <div class='text-center table-responsive mt-2' v-html="IS_display">No data</div>
                     </div>
-                    <div class="col-12" :class="{'d-none':!IS_display_mode}">                        
+                    <div class="col-12" :class="{'d-none':!IS_display_mode}">
                         <div class='mt-2 text-center' :class="{'d-none':IS_display_path.length!=0}" v-html="IS_display_img">No data</div>
                     </div>
                 </div>
