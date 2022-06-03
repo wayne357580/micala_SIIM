@@ -14,11 +14,7 @@ let app = new Vue({
     },
     methods: {
         search_resource() {
-            if (location.hostname.includes('github.io')) {
-                document.location.href = `${location.hostname}/public/html/ESreportContent.html?_text=${this.search_text}`;
-            } else {
-                document.location.href = `/public/html/ESreportContent.html?_text=${this.search_text}`;
-            }
+            document.location.href = `/public/html/ESreportContent.html?_text=${this.search_text}`;
         }
     },
     async mounted() {
